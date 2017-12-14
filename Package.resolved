@@ -1,0 +1,25 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "Automata",
+        "repositoryURL": "https://github.com/xiaoxinghu/Automata.git",
+        "state": {
+          "branch": "develop",
+          "revision": "2f80f559493ac5e6e45fa2fa70c986a89c66ea51",
+          "version": null
+        }
+      },
+      {
+        "package": "FuncKit",
+        "repositoryURL": "https://github.com/xiaoxinghu/FuncKit.git",
+        "state": {
+          "branch": null,
+          "revision": "c1c537148b65ef824238ca0c738f806b38ca6cbf",
+          "version": "1.0.3"
+        }
+      }
+    ]
+  },
+  "version": 1
+}
