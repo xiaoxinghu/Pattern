@@ -22,7 +22,7 @@ private func nfa2dfa(_ nfa: RegexNFA) -> RegexDFA {
     return nfa.toDFA()
 }
 
-public func compile(_ pattern: String) -> Result<Pattern> {
+public func compile(pattern: String) -> Result<Pattern> {
     return DFABasedPattern.init <^> (nfa2dfa <^> re2nfa(pattern))
 }
 

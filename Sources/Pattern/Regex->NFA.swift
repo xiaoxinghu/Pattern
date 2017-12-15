@@ -40,9 +40,9 @@ func regexTokens2nfa(_ tokens: [RegexToken]) -> Result<RegexNFA> {
             let n = stack.popLast()!
             stack.append(n.negate())
         case .literal(let char):
-            stack.append(NFA(char))
+            stack.append(RegexNFA(char))
         case .dot:
-            stack.append(NFA(CharacterExpression.any.rawValue))
+            stack.append(RegexNFA(CharacterExpression.any.rawValue))
         case .capture:
             assert(stack.count >= 1)
             let n = stack.popLast()!
