@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum OKError: Error {
+public enum PError: Error {
     case unexpectedToken(String)
     case cannotFindToken(String)
     case other(Error)

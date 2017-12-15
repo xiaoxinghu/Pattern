@@ -1,28 +1,54 @@
 //
-//  DFA+PatternMatcher.swift
-//  Pattern
+//  Pattern.swift
+//  OrgKit
 //
-//  Created by xhu on 14/12/17.
+//  Created by xhu on 30/07/17.
 //
 
 import Foundation
-import Automata
+import FuncKit
 
-extension DFA where InputType == UInt32 {
+public struct MatchResult {
+    public var string: String = ""
+    public var matches: Bool = false
+    public var captures: [String] = []
+}
+
+public protocol Pattern {
+    func matches(_ string: String) -> MatchResult
+}
+
+private func nfa2dfa(_ nfa: RegexNFA) -> RegexDFA {
+    return nfa.toDFA()
+}
+
+public func compile(_ pattern: String) -> Result<Pattern> {
+    return DFABasedPattern.init <^> (nfa2dfa <^> re2nfa(pattern))
+}
+
+struct DFABasedPattern : Pattern {
+    
+    let dfa: RegexDFA
+    
+    init(_ _dfa: RegexDFA) {
+        dfa = _dfa
+    }
+
+    
     public func matches(_ string: String) -> MatchResult {
-        var state = initial
+        var state = dfa.initial
         var result = MatchResult()
         result.string = string
         for c in string.unicodeScalars {
             if let next = findNext(from: state, with: c) {
-                if let group = states[state].captures[next] {
+                if let group = dfa.states[state].captures[next] {
                     while result.captures.count <= group {
                         result.captures.append("")
                     }
                     result.captures[group].append(Character(c))
                 }
                 
-                if states[next].isEnd {
+                if dfa.states[next].isEnd {
                     result.matches = true
                     return result
                 }
@@ -31,8 +57,8 @@ extension DFA where InputType == UInt32 {
             }
             return result
         }
-        if let eof = states[state].transitions[CharacterExpression.eol.rawValue] {
-            if states[eof].isEnd {
+        if let eof = dfa.states[state].transitions[CharacterExpression.eol.rawValue] {
+            if dfa.states[eof].isEnd {
                 result.matches = true
                 return result
             }
@@ -41,7 +67,7 @@ extension DFA where InputType == UInt32 {
     }
     
     func findNext(from state: Int, with input: Unicode.Scalar) -> Int? {
-        let state = states[state]
+        let state = dfa.states[state]
         if let dest = state.transitions[input.value] { return dest }
         
         //        let specials: [CharacterExpression] = [.d, .w, .any]
@@ -67,6 +93,5 @@ extension DFA where InputType == UInt32 {
         //        if let dest = state.transitions[CharacterExpression.any.rawValue] { return dest }
         return nil
     }
+    
 }
-
-

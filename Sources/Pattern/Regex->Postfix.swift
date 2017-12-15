@@ -31,7 +31,7 @@ private func consume(char: Character, syntax: RegexSyntax) -> Result<RegexSyntax
         syntax.infix = String(syntax.infix.dropFirst(1))
         return .success(syntax)
     } else {
-        return .failure(OKError.illegalRegexSyntax("expecting char: \(char), but got: \(String(describing: syntax.infix.first))"))
+        return .failure(PError.illegalRegexSyntax("expecting char: \(char), but got: \(String(describing: syntax.infix.first))"))
     }
 }
 
@@ -43,7 +43,7 @@ private func next(_ syntax: RegexSyntax) -> Result<(Character, RegexSyntax)> {
     if let c = syntax.peek {
         return consume(char: c, syntax: syntax).map { (c, $0) }
     }
-    return .failure(OKError.illegalRegexSyntax("Expecting char here."))
+    return .failure(PError.illegalRegexSyntax("Expecting char here."))
 }
 
 private func append(token: RegexToken, to syntax: RegexSyntax) -> Result<RegexSyntax> {
@@ -94,7 +94,7 @@ private var processCharClass = curry(consume)(.lBracket) |> handleCharSet |> cur
 private func handleCharSet(_ syntax: RegexSyntax) -> Result<RegexSyntax> {
     var negated = false
     guard let c = syntax.peek else {
-        return .failure(OKError.illegalRegexSyntax("Expecting char after ["))
+        return .failure(PError.illegalRegexSyntax("Expecting char after ["))
     }
     var f: (RegexSyntax) -> Result<RegexSyntax> = { .success($0) }
     // check if is negated
@@ -118,7 +118,7 @@ private func replaceRangeWithLiteral(_ syntax: RegexSyntax) -> Result<RegexSynta
     var infix = syntax.infix
     
     guard let end = infix.index(of: "]") else {
-        return .failure(OKError.illegalRegexSyntax("Cannot find closing ]"))
+        return .failure(PError.illegalRegexSyntax("Cannot find closing ]"))
     }
     let theCharSet = String(infix[infix.startIndex..<end])
     
@@ -140,10 +140,10 @@ func replaceRangeWithLiteral(_ string: String) -> Result<String> {
         
         if let _rangeFrom = rangeFrom {
             guard let from = _rangeFrom.asciiValue, let to = c.asciiValue else {
-                return .failure(OKError.illegalRegexSyntax("Illegal Character for range"))
+                return .failure(PError.illegalRegexSyntax("Illegal Character for range"))
             }
             if from > to {
-                return .failure(OKError.illegalRegexSyntax("Cannot form range with upperBound < lowerBound"))
+                return .failure(PError.illegalRegexSyntax("Cannot form range with upperBound < lowerBound"))
             }
             let range = Array(from...to).map { Character(Unicode.Scalar($0)!) }
             chars += range
@@ -212,7 +212,7 @@ private func primary(_ syntax: RegexSyntax) -> Result<RegexSyntax> {
     case .eol:
         return (curry(append)(.literal(CharacterExpression.eol.rawValue)) |> curry(consume)(c))(syntax)
     default:
-        return .failure(OKError.illegalRegexSyntax("Don't know how to process '\(c)' at this stage."))
+        return .failure(PError.illegalRegexSyntax("Don't know how to process '\(c)' at this stage."))
     }
 }
 

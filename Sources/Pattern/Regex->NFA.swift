@@ -53,7 +53,7 @@ func regexTokens2nfa(_ tokens: [RegexToken]) -> Result<RegexNFA> {
     }
     
     guard stack.count == 1 else {
-        return .failure(OKError.regex2nfa("Expect to have one nfa in the stack now. But got \(stack.count)"))
+        return .failure(PError.regex2nfa("Expect to have one nfa in the stack now. But got \(stack.count)"))
     }
     return .success(stack.popLast()!)
 }
