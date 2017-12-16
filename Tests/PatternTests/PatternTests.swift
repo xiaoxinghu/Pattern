@@ -2,7 +2,7 @@ import XCTest
 import Pattern
 
 func match(_ pattern: String, against text: String) -> MatchResult<String>? {
-    guard let p = Regex.compile(pattern: pattern, attachment: pattern).value else { return nil }
+    guard let p = PatternMachine.compile((pattern, pattern)).value else { return nil }
     return p.matches(text)
 }
 
@@ -20,16 +20,36 @@ func validate(pattern: String, positives: [String] = [], negatives: [String] = [
     }
 }
 
+enum OrgSyntax: String {
+    case headline = "(\\*+)\\s+.*"
+    case keyword = "\\s*#\\+(\\w+):\\s*(.*)$"
+    case aKeyword = "\\s*#\\+(CAPTION|HEADER|NAME|PLOT|RESULTS|ATTR_BACKEND):\\s*(.*)$"
+    case blank = "\\s*$"
+    case planning = "\\s*(DEADLINE|SCHEDULED|CLOSED):\\s*(.+)$"
+    case blockBegin = "\\s*#\\+[Bb][Ee][Gg][Ii][Nn]_(\\w+).*$"
+    case blockEnd = "\\s*#\\+[Ee][Nn][Dd]_([^ ]+)$"
+    case horizontalRule = "\\s*-----+\\s*$"
+    // TODO: implement repeat
+    //    case horizontalRule = "\\s*-{5,}\\s*$"
+    case comment = "\\s*#\\s.*"
+    case listItem = "\\s*([-+]|\\d+[.)])\\s+.*"
+    case footnote = "\\[fn:(\\w+)\\].*"
+    case tableSeparator = "\\s*\\|-"
+    case tableRow = "\\s*\\|(\\s*.+\\|)+\\s*$"
+    case drawerBegin = "\\s*:(\\w+):\\s*$"
+    case drawerEnd = "\\s*:(END|end):\\s*"
+}
+
 class PatternTests: XCTestCase {
     
     func testOrgmodePattern() {
         // blank
-        validate(pattern: "\\s*$",
+        validate(pattern: OrgSyntax.blank.rawValue,
                  positives: [ "", "  ", "\t", "  \t "],
                  negatives: [ "s", " \t s " ])
 
         // headline
-        validate(pattern: "(\\*+)\\s+.*",
+        validate(pattern: OrgSyntax.headline.rawValue,
                  positives: [
                     "** a headline",
                     "**   a headline",
@@ -43,7 +63,7 @@ class PatternTests: XCTestCase {
                     "not a headline"])
         
         // keyword
-        validate(pattern: "\\s*#\\+(\\w+):\\s*(.*)$",
+        validate(pattern: OrgSyntax.keyword.rawValue,
                  positives: [
                    "#+KEY: Value",
                    "#+KEY: Another Value",
@@ -51,7 +71,7 @@ class PatternTests: XCTestCase {
                  negatives: ["#+KEY : Value", "#+KE Y: Value"])
         
         // planning
-        validate(pattern: "\\s*(DEADLINE|SCHEDULED|CLOSED):\\s*(.+)$",
+        validate(pattern: OrgSyntax.planning.rawValue,
                  positives: [
                    "DEADLINE: <blah>",
                    "  DEADLINE: <blah>",
@@ -60,7 +80,7 @@ class PatternTests: XCTestCase {
                  negatives: ["dEADLINE: <blah>"])
         
         // block begin
-        validate(pattern: "\\s*#\\+[Bb][Ee][Gg][Ii][Nn]_(\\w+).*$",
+        validate(pattern: OrgSyntax.blockBegin.rawValue,
                  positives: [
                    "#+BEGIN_SRC swift",
                    " #+BEGIN_SRC swift",
@@ -71,7 +91,7 @@ class PatternTests: XCTestCase {
                  negatives: ["#+begi😀n_src swift"])
         
         // block end
-        validate(pattern: "\\s*#\\+[Ee][Nn][Dd]_([^ ]+)$",
+        validate(pattern: OrgSyntax.blockEnd.rawValue,
                  positives: [
                    "#+END_SRC",
                    "  #+END_SRC",
@@ -81,7 +101,7 @@ class PatternTests: XCTestCase {
                  negatives: ["#+end_SRC ", "#+end_src param"])
         
         // horizontal rule
-        validate(pattern: "\\s*-----+\\s*$",
+        validate(pattern: OrgSyntax.horizontalRule.rawValue,
                  positives: [
                    "-----",
                    "------",
@@ -98,7 +118,7 @@ class PatternTests: XCTestCase {
                    "-----    a"])
         
         // comment
-        validate(pattern: "\\s*#\\s.*",
+        validate(pattern: OrgSyntax.comment.rawValue,
                  positives: [
                    "# a comment",
                    "# ",
@@ -110,7 +130,7 @@ class PatternTests: XCTestCase {
                  negatives: ["#not a comment", "  #not a comment"])
         
         // list item
-        validate(pattern: "\\s*([-+]|\\d+[.)])\\s+.*",
+        validate(pattern: OrgSyntax.listItem.rawValue,
                  positives: [
                    "- item one",
                    // "* item one", TODO: conflict with headline?
@@ -125,7 +145,7 @@ class PatternTests: XCTestCase {
                    "8a) not item"])
         
         // footnote
-        validate(pattern: "\\[fn:(\\w+)\\].*",
+        validate(pattern: OrgSyntax.footnote.rawValue,
                  positives: [
                    "[fn:1]: a footnote",
                    "[fn:word]: a footnote",
@@ -137,7 +157,7 @@ class PatternTests: XCTestCase {
                    "\t[fn:1]: not a footnote"])
         
         // table separator
-        validate(pattern: "\\s*\\|-",
+        validate(pattern: OrgSyntax.tableSeparator.rawValue,
                  positives: [
                    "|----+---+----|",
                    "|--=-+---+----|",
@@ -148,7 +168,7 @@ class PatternTests: XCTestCase {
                  negatives: ["----+---+----|"])
         
         // table row
-        validate(pattern: "\\s*\\|(\\s*.+\\|)+\\s*$",
+        validate(pattern: OrgSyntax.tableRow.rawValue,
                  positives: [
                    "| hello | world | y'all |",
                    "   | hello | world | y'all |",
@@ -156,7 +176,7 @@ class PatternTests: XCTestCase {
                  negatives: [" hello | world | y'all |", "|+"])
         
         // drawer begin
-        validate(pattern: "\\s*:(\\w+):\\s*$",
+        validate(pattern: OrgSyntax.drawerBegin.rawValue,
                  positives: [
                    ":PROPERTIES:",
                    "  :properties:",
@@ -168,14 +188,15 @@ class PatternTests: XCTestCase {
                    ":PR OPERTIES:"])
         
         // drawer end
-        validate(pattern: "\\s*:(END|end):\\s*",
+        validate(pattern: OrgSyntax.drawerEnd.rawValue,
                  positives: [":END:", "  :end:", "  :end:  ", "  :end:  "],
                  negatives: [":ENd:", "END:", ":END", ":ENDed"])
     }
     
     func testCapture() {
         let pattern = "(\\d+)-(\\d+)-(\\d+)$"
-        let p = Regex.compile(pattern: pattern, attachment: "A String").value!
+        
+        let p = PatternMachine.compile((pattern, pattern)).value!
         let result = p.matches("2017-12-16")
         XCTAssert(result.matches)
         XCTAssertEqual(result.captures.count, 3)
@@ -183,8 +204,19 @@ class PatternTests: XCTestCase {
         XCTAssertEqual(result.captures[1], "12")
         XCTAssertEqual(result.captures[2], "16")
     }
-
-
+    
+    func testMergedMachine() {
+        let syntax = [
+            (OrgSyntax.headline.rawValue, "headline"),
+            (OrgSyntax.keyword.rawValue, "keyword"),
+            ]
+        let p = PatternMachine.compile(syntax).value!
+        XCTAssert(p.matches("* headline").matches)
+        XCTAssert(p.matches("#+TITLE: hello").matches)
+        XCTAssert(!p.matches("").matches)
+        XCTAssert(!p.matches("#+BEGIN_SRC swift").matches)
+    }
+    
     static var allTests = [
         ("testOrgmodePattern", testOrgmodePattern),
     ]

@@ -20,25 +20,50 @@ public protocol Pattern {
     func matches(_ string: String) -> MatchResult<DataType>
 }
 
-private func nfa2dfa<T>(_ nfa: RegexNFA<T>) -> RegexDFA<T> {
-    return nfa.toDFA()
+public struct PatternMachine<T> {
+    
+    var dfa: RegexDFA<T>
+    
+    let nfas: [RegexNFA<T>]
+    
+    init(_ _nfas: RegexNFA<T>...) {
+        nfas = _nfas
+        dfa = RegexNFA.merge(nfas).toDFA()
+    }
+    
+    init(_ _nfas: [RegexNFA<T>]) {
+        nfas = _nfas
+        dfa = RegexNFA.merge(nfas).toDFA()
+    }
+    
+    public mutating func compile() {
+        dfa = RegexNFA.merge(nfas).toDFA()
+    }
+
 }
 
-extension Regex {
-    public static func compile(pattern: String, attachment: T) -> Result<Regex<T>> {
-        return Regex.init <^> (nfa2dfa <^> re2nfa(pattern, attachment: attachment))
+private func _append<T>(all: [RegexNFA<T>], other: RegexNFA<T>) -> [RegexNFA<T>] {
+    return all + [other]
+}
+
+extension PatternMachine {
+    public static func compile(_ branches: (String, T)...) -> Result<PatternMachine<T>> {
+        return _compile(branches)
+    }
+    
+    public static func compile(_ branches: [(String, T)]) -> Result<PatternMachine<T>> {
+        return _compile(branches)
     }
 }
 
-public struct Regex<T> : Pattern {
+private func _compile<T>(_ branches: [(String, T)]) -> Result<PatternMachine<T>> {
+    return branches.map(re2nfa).reduce(.success([])) { all, current in
+        return curry(_append) <^> all <*> current
+        }.map { PatternMachine($0) }
+}
+
+extension PatternMachine : Pattern {
     public typealias DataType = T
-    
-    let dfa: RegexDFA<T>
-    
-    init(_ _dfa: RegexDFA<T>) {
-        dfa = _dfa
-    }
-
     
     public func matches(_ string: String) -> MatchResult<T> {
         var state = dfa.initial
@@ -77,6 +102,7 @@ public struct Regex<T> : Pattern {
         let state = dfa.states[state]
         if let dest = state.transitions[input.value] { return dest }
         
+        // TODO: code like this has significant impact on perf, because for in loop sucks
         //        let specials: [CharacterExpression] = [.d, .w, .any]
         //        for ce in specials {
         //            if let dest = state.transitions[ce.rawValue], ce.match(input) {
@@ -99,5 +125,4 @@ public struct Regex<T> : Pattern {
         
         return nil
     }
-    
 }
