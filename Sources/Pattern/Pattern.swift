@@ -90,7 +90,6 @@ struct DFABasedPattern : Pattern {
             return dest
         }
         
-        //        if let dest = state.transitions[CharacterExpression.any.rawValue] { return dest }
         return nil
     }
     

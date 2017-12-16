@@ -169,6 +169,17 @@ class PatternTests: XCTestCase {
                  positives: [":END:", "  :end:", "  :end:  ", "  :end:  "],
                  negatives: [":ENd:", "END:", ":END", ":ENDed"])
     }
+    
+    func testCapture() {
+        let pattern = "(\\d+)-(\\d+)-(\\d+)$"
+        let p = compile(pattern: pattern).value!
+        let result = p.matches("2017-12-16")
+        XCTAssert(result.matches)
+        XCTAssertEqual(result.captures.count, 3)
+        XCTAssertEqual(result.captures[0], "2017")
+        XCTAssertEqual(result.captures[1], "12")
+        XCTAssertEqual(result.captures[2], "16")
+    }
 
 
     static var allTests = [
