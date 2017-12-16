@@ -9,8 +9,8 @@ import Foundation
 import FuncKit
 import Automata
 
-typealias RegexDFA = DFA<String, UInt32>
-typealias RegexNFA = NFA<String, UInt32>
+typealias RegexDFA<T> = DFA<T, UInt32>
+typealias RegexNFA<T> = NFA<T, UInt32>
 
 enum RegexToken {
     
@@ -84,8 +84,4 @@ extension Character {
         }
         return .literal(self.unicodeScalars.first!.value)
     }
-}
-
-func compile(_ pattern: String) -> Result<RegexDFA> {
-    return re2nfa(pattern).map { $0.toDFA() }
 }

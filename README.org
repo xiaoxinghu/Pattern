@@ -1,1 +1,4 @@
 * Pattern
+
+A DFA based regex matcher.
+

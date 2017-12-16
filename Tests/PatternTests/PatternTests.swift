@@ -1,18 +1,22 @@
 import XCTest
-@testable import Pattern
+import Pattern
 
-func validate(_ pattern: String, matches text: String) -> Bool {
-    guard let p = compile(pattern: pattern).value else { return false }
-    return p.matches(text).matches
+func match(_ pattern: String, against text: String) -> MatchResult<String>? {
+    guard let p = Regex.compile(pattern: pattern, attachment: pattern).value else { return nil }
+    return p.matches(text)
 }
 
 func validate(pattern: String, positives: [String] = [], negatives: [String] = [], file: StaticString = #file, line: UInt = #line) {
     for p in positives {
-        XCTAssert(validate(pattern, matches: p), "\"\(p)\" should match", file: file, line: line)
+        let mr = match(pattern, against: p)!
+        XCTAssert(mr.matches, "\"\(p)\" should match", file: file, line: line)
+        XCTAssertEqual(mr.data, pattern, file: file, line: line)
     }
     
     for n in negatives {
-        XCTAssert(!validate(pattern, matches: n), "\"\(n)\" should not match", file: file, line: line)
+        let mr = match(pattern, against: n)!
+        XCTAssert(!mr.matches, "\"\(n)\" should not match", file: file, line: line)
+        XCTAssertNil(mr.data, file: file, line: line)
     }
 }
 
@@ -25,7 +29,6 @@ class PatternTests: XCTestCase {
                  negatives: [ "s", " \t s " ])
 
         // headline
-        XCTAssert(validate("(\\*+)\\s+.*", matches: "*   a headline"))
         validate(pattern: "(\\*+)\\s+.*",
                  positives: [
                     "** a headline",
@@ -172,7 +175,7 @@ class PatternTests: XCTestCase {
     
     func testCapture() {
         let pattern = "(\\d+)-(\\d+)-(\\d+)$"
-        let p = compile(pattern: pattern).value!
+        let p = Regex.compile(pattern: pattern, attachment: "A String").value!
         let result = p.matches("2017-12-16")
         XCTAssert(result.matches)
         XCTAssertEqual(result.captures.count, 3)

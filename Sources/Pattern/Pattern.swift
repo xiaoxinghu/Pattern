@@ -8,36 +8,41 @@
 import Foundation
 import FuncKit
 
-public struct MatchResult {
+public struct MatchResult<T> {
     public var string: String = ""
     public var matches: Bool = false
     public var captures: [String] = []
+    public var data: T? = nil
 }
 
 public protocol Pattern {
-    func matches(_ string: String) -> MatchResult
+    associatedtype DataType
+    func matches(_ string: String) -> MatchResult<DataType>
 }
 
-private func nfa2dfa(_ nfa: RegexNFA) -> RegexDFA {
+private func nfa2dfa<T>(_ nfa: RegexNFA<T>) -> RegexDFA<T> {
     return nfa.toDFA()
 }
 
-public func compile(pattern: String) -> Result<Pattern> {
-    return DFABasedPattern.init <^> (nfa2dfa <^> re2nfa(pattern))
+extension Regex {
+    public static func compile(pattern: String, attachment: T) -> Result<Regex<T>> {
+        return Regex.init <^> (nfa2dfa <^> re2nfa(pattern, attachment: attachment))
+    }
 }
 
-struct DFABasedPattern : Pattern {
+public struct Regex<T> : Pattern {
+    public typealias DataType = T
     
-    let dfa: RegexDFA
+    let dfa: RegexDFA<T>
     
-    init(_ _dfa: RegexDFA) {
+    init(_ _dfa: RegexDFA<T>) {
         dfa = _dfa
     }
 
     
-    public func matches(_ string: String) -> MatchResult {
+    public func matches(_ string: String) -> MatchResult<T> {
         var state = dfa.initial
-        var result = MatchResult()
+        var result = MatchResult<T>()
         result.string = string
         for c in string.unicodeScalars {
             if let next = findNext(from: state, with: c) {
@@ -50,6 +55,7 @@ struct DFABasedPattern : Pattern {
                 
                 if dfa.states[next].isEnd {
                     result.matches = true
+                    result.data = dfa.states[next].data
                     return result
                 }
                 state = next
@@ -60,6 +66,7 @@ struct DFABasedPattern : Pattern {
         if let eof = dfa.states[state].transitions[CharacterExpression.eol.rawValue] {
             if dfa.states[eof].isEnd {
                 result.matches = true
+                result.data = dfa.states[eof].data
                 return result
             }
         }
