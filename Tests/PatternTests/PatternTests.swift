@@ -18,12 +18,6 @@ func validate(pattern: String, positives: [String] = [], negatives: [String] = [
 
 class PatternTests: XCTestCase {
     
-    func testCharExpression() {
-        // \s for whitespace
-//        XCTAssert(pattern("\\s*$", matchesAll: [ "", "  ", "\t", "  \t "]))
-//        XCTAssert(pattern("\\s*$", doesNotMatchAny: [ "a", " \t s " ]))
-    }
-    
     func testOrgmodePattern() {
         // blank
         validate(pattern: "\\s*$",
@@ -178,7 +172,6 @@ class PatternTests: XCTestCase {
 
 
     static var allTests = [
-        ("testCharExpression", testCharExpression),
         ("testOrgmodePattern", testOrgmodePattern),
     ]
 }
