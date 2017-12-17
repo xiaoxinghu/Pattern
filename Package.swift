@@ -14,7 +14,7 @@ let package = Package(
     dependencies: [
         // Dependencies declare other packages that this package depends on.
 
-        .package(url: "https://github.com/xiaoxinghu/Automata.git", .branch("feature/noattached")),
+        .package(url: "https://github.com/xiaoxinghu/Automata.git", .branch("develop")),
         .package(url: "https://github.com/xiaoxinghu/FuncKit.git", from: "1.0.0"),
     ],
     targets: [

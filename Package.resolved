@@ -5,8 +5,8 @@
         "package": "Automata",
         "repositoryURL": "https://github.com/xiaoxinghu/Automata.git",
         "state": {
-          "branch": "feature/noattached",
-          "revision": "1f37ef34fce63e1526858baf4bfc3528dc368f6d",
+          "branch": "develop",
+          "revision": "e2990c7f8ce5063707a0c4fdd49106d8524df7a8",
           "version": null
         }
       },
