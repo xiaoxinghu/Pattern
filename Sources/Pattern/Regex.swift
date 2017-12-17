@@ -9,8 +9,8 @@ import Foundation
 import FuncKit
 import Automata
 
-typealias RegexDFA<T> = DFA<T, UInt32>
-typealias RegexNFA<T> = NFA<T, UInt32>
+typealias RegexDFA = DFA<UInt32>
+typealias RegexNFA = NFA<UInt32>
 
 enum RegexToken {
     
