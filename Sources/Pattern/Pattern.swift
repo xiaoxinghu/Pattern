@@ -8,30 +8,29 @@
 import Foundation
 import FuncKit
 
-public struct MatchResult<T> {
+public struct MatchResult {
     public var string: String = ""
     public var matches: Bool = false
     public var captures: [String] = []
-    public var data: T? = nil
+    public var traceId: Int = -1
 }
 
 public protocol Pattern {
-    associatedtype DataType
-    func matches(_ string: String) -> MatchResult<DataType>
+    func matches(_ string: String) -> MatchResult
 }
 
-public struct PatternMachine<T> {
+public struct PatternMachine {
     
-    var dfa: RegexDFA<T>
+    var dfa: RegexDFA
     
-    let nfas: [RegexNFA<T>]
+    let nfas: [RegexNFA]
     
-    init(_ _nfas: RegexNFA<T>...) {
+    init(_ _nfas: RegexNFA...) {
         nfas = _nfas
         dfa = RegexNFA.merge(nfas).toDFA()
     }
     
-    init(_ _nfas: [RegexNFA<T>]) {
+    init(_ _nfas: [RegexNFA]) {
         nfas = _nfas
         dfa = RegexNFA.merge(nfas).toDFA()
     }
@@ -42,32 +41,31 @@ public struct PatternMachine<T> {
 
 }
 
-private func _append<T>(all: [RegexNFA<T>], other: RegexNFA<T>) -> [RegexNFA<T>] {
+private func _append(all: [RegexNFA], other: RegexNFA) -> [RegexNFA] {
     return all + [other]
 }
 
 extension PatternMachine {
-    public static func compile(_ branches: (String, T)...) -> Result<PatternMachine<T>> {
+    public static func compile(_ branches: (String, Int)...) -> Result<PatternMachine> {
         return _compile(branches)
     }
     
-    public static func compile(_ branches: [(String, T)]) -> Result<PatternMachine<T>> {
+    public static func compile(_ branches: [(String, Int)]) -> Result<PatternMachine> {
         return _compile(branches)
     }
 }
 
-private func _compile<T>(_ branches: [(String, T)]) -> Result<PatternMachine<T>> {
+private func _compile(_ branches: [(String, Int)]) -> Result<PatternMachine> {
     return branches.map(re2nfa).reduce(.success([])) { all, current in
         return curry(_append) <^> all <*> current
         }.map { PatternMachine($0) }
 }
 
 extension PatternMachine : Pattern {
-    public typealias DataType = T
     
-    public func matches(_ string: String) -> MatchResult<T> {
+    public func matches(_ string: String) -> MatchResult {
         var state = dfa.initial
-        var result = MatchResult<T>()
+        var result = MatchResult()
         result.string = string
         for c in string.unicodeScalars {
             if let next = findNext(from: state, with: c) {
@@ -80,7 +78,7 @@ extension PatternMachine : Pattern {
                 
                 if dfa.states[next].isEnd {
                     result.matches = true
-                    result.data = dfa.states[next].data
+                    result.traceId = dfa.states[next].traceId
                     return result
                 }
                 state = next
@@ -91,7 +89,7 @@ extension PatternMachine : Pattern {
         if let eof = dfa.states[state].transitions[CharacterExpression.eol.rawValue] {
             if dfa.states[eof].isEnd {
                 result.matches = true
-                result.data = dfa.states[eof].data
+                result.traceId = dfa.states[eof].traceId
                 return result
             }
         }

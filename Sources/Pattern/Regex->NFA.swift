@@ -9,8 +9,8 @@ import Foundation
 import FuncKit
 import Automata
 
-func regexTokens2nfa<T>(attachment: T, tokens: [RegexToken]) -> Result<RegexNFA<T>> {
-    var stack = [RegexNFA<T>]()
+func regexTokens2nfa(id: Int, tokens: [RegexToken]) -> Result<RegexNFA> {
+    var stack = [RegexNFA]()
     for t in tokens {
         switch t {
         case .concat:
@@ -57,11 +57,11 @@ func regexTokens2nfa<T>(attachment: T, tokens: [RegexToken]) -> Result<RegexNFA<
     }
     let nfa = stack.popLast()!
     for i in nfa.finals {
-        nfa.states[i].data = attachment
+        nfa.states[i].traceId = id
     }
     return .success(nfa)
 }
 
-func re2nfa<T>(_ regex: String, attachment: T) -> Result<RegexNFA<T>> {
-    return (re2post |> curry(regexTokens2nfa)(attachment))(regex)
+func re2nfa(_ regex: String, id: Int) -> Result<RegexNFA> {
+    return (re2post |> curry(regexTokens2nfa)(id))(regex)
 }

@@ -1,8 +1,8 @@
 import XCTest
 import Pattern
 
-func match(_ pattern: String, against text: String) -> MatchResult<String>? {
-    guard let p = PatternMachine.compile((pattern, pattern)).value else { return nil }
+func match(_ pattern: String, against text: String) -> MatchResult? {
+    guard let p = PatternMachine.compile((pattern, pattern.hashValue)).value else { return nil }
     return p.matches(text)
 }
 
@@ -10,13 +10,13 @@ func validate(pattern: String, positives: [String] = [], negatives: [String] = [
     for p in positives {
         let mr = match(pattern, against: p)!
         XCTAssert(mr.matches, "\"\(p)\" should match", file: file, line: line)
-        XCTAssertEqual(mr.data, pattern, file: file, line: line)
+        XCTAssertEqual(mr.traceId, pattern.hashValue, file: file, line: line)
     }
     
     for n in negatives {
         let mr = match(pattern, against: n)!
         XCTAssert(!mr.matches, "\"\(n)\" should not match", file: file, line: line)
-        XCTAssertNil(mr.data, file: file, line: line)
+        XCTAssertEqual(mr.traceId, -1)
     }
 }
 
@@ -196,7 +196,7 @@ class PatternTests: XCTestCase {
     func testCapture() {
         let pattern = "(\\d+)-(\\d+)-(\\d+)$"
         
-        let p = PatternMachine.compile((pattern, pattern)).value!
+        let p = PatternMachine.compile((pattern, pattern.hashValue)).value!
         let result = p.matches("2017-12-16")
         XCTAssert(result.matches)
         XCTAssertEqual(result.captures.count, 3)
@@ -207,8 +207,8 @@ class PatternTests: XCTestCase {
     
     func testMergedMachine() {
         let syntax = [
-            (OrgSyntax.headline.rawValue, "headline"),
-            (OrgSyntax.keyword.rawValue, "keyword"),
+            (OrgSyntax.headline.rawValue, OrgSyntax.headline.rawValue.hashValue),
+            (OrgSyntax.keyword.rawValue, OrgSyntax.keyword.rawValue.hashValue),
             ]
         let p = PatternMachine.compile(syntax).value!
         XCTAssert(p.matches("* headline").matches)
