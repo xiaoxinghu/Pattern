@@ -34,7 +34,7 @@ enum RegexToken {
         return [.lParen, .rParen, .lBracket, .rBracket, .star, .alt, .plus, qmark, .dot, .escape, .eol, .negate]
     }
     
-    var char: Character {
+    var unicodeScalar: Unicode.Scalar {
         switch self {
         case .lParen:
             return "("
@@ -63,15 +63,16 @@ enum RegexToken {
         default: fatalError()
         }
     }
+    
 }
 
-extension Character {
+extension Unicode.Scalar {
     func isNot(_ symbols: RegexToken...) -> Bool {
         return !symbols.contains { self.is($0) }
     }
     
     func `is`(_ symbol: RegexToken) -> Bool {
-        return self == symbol.char
+        return self == symbol.unicodeScalar
     }
     
     func isOneOf(_ symbols: RegexToken...) -> Bool {
@@ -82,6 +83,7 @@ extension Character {
         if let s = RegexToken.symbols.first(where: { self.is($0) }) {
             return s
         }
-        return .literal(self.unicodeScalars.first!.value)
+        return .literal(self.value)
     }
 }
+

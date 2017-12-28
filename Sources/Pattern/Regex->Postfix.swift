@@ -11,24 +11,24 @@ import FuncKit
 import Automata
 
 private struct RegexSyntax {
-    var infix: String
+    var infix: [Unicode.Scalar]
     var postfix: [RegexToken]
     
     init(_ _pattern: String) {
-        infix = _pattern
+        infix = [Unicode.Scalar](_pattern.unicodeScalars)
         postfix = []
     }
     
-    var peek: Character? {
+    var peek: Unicode.Scalar? {
         return infix.first
     }
     
 }
 
-private func consume(char: Character, syntax: RegexSyntax) -> Result<RegexSyntax> {
+private func consume(char: Unicode.Scalar, syntax: RegexSyntax) -> Result<RegexSyntax> {
     var syntax = syntax
     if let c = syntax.infix.first, c == char {
-        syntax.infix = String(syntax.infix.dropFirst(1))
+        syntax.infix.removeFirst()
         return .success(syntax)
     } else {
         return .failure(PError.illegalRegexSyntax("expecting char: \(char), but got: \(String(describing: syntax.infix.first))"))
@@ -36,10 +36,10 @@ private func consume(char: Character, syntax: RegexSyntax) -> Result<RegexSyntax
 }
 
 private func consume(symbol: RegexToken, syntax: RegexSyntax) -> Result<RegexSyntax> {
-    return consume(char: symbol.char, syntax: syntax)
+    return consume(char: symbol.unicodeScalar, syntax: syntax)
 }
 
-private func next(_ syntax: RegexSyntax) -> Result<(Character, RegexSyntax)> {
+private func next(_ syntax: RegexSyntax) -> Result<(Unicode.Scalar, RegexSyntax)> {
     if let c = syntax.peek {
         return consume(char: c, syntax: syntax).map { (c, $0) }
     }
@@ -50,6 +50,15 @@ private func append(token: RegexToken, to syntax: RegexSyntax) -> Result<RegexSy
     var syntax = syntax
     syntax.postfix.append(token)
     return .success(syntax)
+}
+
+private func append(char: Character, to syntax: RegexSyntax) -> Result<RegexSyntax> {
+    var result = Result.success(syntax)
+    for c in char.unicodeScalars {
+        let f = curry(append)(.literal(c.value))
+        result = result.flatMap(f: f)
+    }
+    return result
 }
 
 func re2post(_ pattern: String) -> Result<[RegexToken]> {
@@ -120,7 +129,8 @@ private func replaceRangeWithLiteral(_ syntax: RegexSyntax) -> Result<RegexSynta
     guard let end = infix.index(of: "]") else {
         return .failure(PError.illegalRegexSyntax("Cannot find closing ]"))
     }
-    let theCharSet = String(infix[infix.startIndex..<end])
+    
+    let theCharSet = Array(infix[infix.startIndex..<end])
     
     return replaceRangeWithLiteral(theCharSet).map { theCharSet in
         infix.replaceSubrange(infix.startIndex..<end, with: theCharSet)
@@ -129,9 +139,9 @@ private func replaceRangeWithLiteral(_ syntax: RegexSyntax) -> Result<RegexSynta
     }
 }
 
-func replaceRangeWithLiteral(_ string: String) -> Result<String> {
-    var chars: [Character] = []
-    var rangeFrom: Character? = nil
+func replaceRangeWithLiteral(_ string: [Unicode.Scalar]) -> Result<[Unicode.Scalar]> {
+    var chars: [Unicode.Scalar] = []
+    var rangeFrom: Unicode.Scalar? = nil
     for c in string {
         if c == "-" && !chars.isEmpty {
             rangeFrom = chars.removeLast()
@@ -145,7 +155,7 @@ func replaceRangeWithLiteral(_ string: String) -> Result<String> {
             if from > to {
                 return .failure(PError.illegalRegexSyntax("Cannot form range with upperBound < lowerBound"))
             }
-            let range = Array(from...to).map { Character(Unicode.Scalar($0)!) }
+            let range = Array(from...to).map { Unicode.Scalar($0)! }
             chars += range
             rangeFrom = nil
             continue
@@ -158,7 +168,7 @@ func replaceRangeWithLiteral(_ string: String) -> Result<String> {
         chars += [from, "-"]
     }
     
-    return .success(String(chars))
+    return .success(chars)
 }
 
 private func charSet(_ syntax: RegexSyntax) -> Result<RegexSyntax> {
@@ -173,7 +183,7 @@ private func charSet(_ syntax: RegexSyntax) -> Result<RegexSyntax> {
 
 private func literal(_ syntax: RegexSyntax) -> Result<RegexSyntax> {
     return next(syntax).flatMap { c, syntax in
-        return append(token: .literal(c.unicodeScalars.first!.value), to: syntax)
+        return append(token: .literal(c.value), to: syntax)
     }
 }
 
@@ -182,14 +192,14 @@ private func handleEscape(_ syntax: RegexSyntax) -> Result<RegexSyntax> {
         switch n {
         case "s":
             var syntax = syntax
-            syntax.infix = "[ \t]" + syntax.infix
+            syntax.infix = "[ \t]".unicodeScalars + syntax.infix
             return processCharClass(syntax)
         case "d":
             return append(token: .literal(CharacterExpression.d.rawValue), to: syntax)
         case "w":
             return append(token: .literal(CharacterExpression.w.rawValue), to: syntax)
         default:
-            return append(token: .literal(n.unicodeScalars.first!.value), to: syntax)
+            return append(token: .literal(n.value), to: syntax)
         }
     }
 
@@ -219,6 +229,13 @@ private func primary(_ syntax: RegexSyntax) -> Result<RegexSyntax> {
 extension Character {
     var asciiValue: UInt32? {
         return String(self).unicodeScalars.filter{$0.isASCII}.first?.value
+    }
+}
+
+extension Unicode.Scalar {
+    var asciiValue: UInt32? {
+        if isASCII { return value }
+        return nil
     }
 }
 

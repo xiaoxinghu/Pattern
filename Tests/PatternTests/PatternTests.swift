@@ -217,6 +217,19 @@ class PatternTests: XCTestCase {
         XCTAssert(!p.matches("#+BEGIN_SRC swift").matches)
     }
     
+    func testPatternWithEmojis() {
+        let pattern = "(👨‍👨‍👦‍👦)-(😀|👨‍👧‍👧)-(\\d+)$"
+        let p = PatternMachine.compile((pattern, pattern.hashValue)).value!
+        let result = p.matches("👨‍👨‍👦‍👦-😀-16")
+        XCTAssert(result.matches)
+        XCTAssertEqual(result.captures.count, 3)
+        XCTAssertEqual(result.captures[0], "👨‍👨‍👦‍👦")
+        XCTAssertEqual(result.captures[1], "😀")
+        XCTAssertEqual(result.captures[2], "16")
+        
+        XCTAssertFalse(p.matches("😀-😀-16").matches)
+    }
+    
     static var allTests = [
         ("testOrgmodePattern", testOrgmodePattern),
     ]
