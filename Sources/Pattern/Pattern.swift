@@ -1,10 +1,3 @@
-//
-//  Pattern.swift
-//  OrgKit
-//
-//  Created by xhu on 30/07/17.
-//
-
 import Foundation
 import FuncKit
 

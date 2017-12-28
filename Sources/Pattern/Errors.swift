@@ -1,10 +1,3 @@
-//
-//  Errors.swift
-//  Pattern
-//
-//  Created by xhu on 14/12/17.
-//
-
 import Foundation
 
 public enum PError: Error {

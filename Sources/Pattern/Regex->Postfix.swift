@@ -1,11 +1,3 @@
-//
-//  Regex+Postfix.swift
-//  OrgKit
-//
-//  Created by Xiaoxing Hu on 17/07/17.
-//
-//
-
 import Foundation
 import FuncKit
 import Automata

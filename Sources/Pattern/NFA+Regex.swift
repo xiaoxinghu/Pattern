@@ -1,10 +1,3 @@
-//
-//  NFA+Regex.swift
-//  Pattern
-//
-//  Created by xhu on 14/12/17.
-//
-
 import Foundation
 import Automata
 

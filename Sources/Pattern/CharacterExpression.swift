@@ -1,10 +1,3 @@
-//
-//  CharacterExpression.swift
-//  OrgKit
-//
-//  Created by xhu on 3/08/17.
-//
-
 import Foundation
 
 enum CharacterExpression: UInt32 {

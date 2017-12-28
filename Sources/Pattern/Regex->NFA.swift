@@ -1,10 +1,3 @@
-//
-//  Regex+NFA.swift
-//  OrgKit
-//
-//  Created by xhu on 20/07/17.
-//
-
 import Foundation
 import FuncKit
 import Automata

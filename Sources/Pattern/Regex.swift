@@ -1,10 +1,3 @@
-//
-//  Regex.swift
-//  OrgKit
-//
-//  Created by xhu on 21/07/17.
-//
-
 import Foundation
 import FuncKit
 import Automata
