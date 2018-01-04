@@ -253,6 +253,17 @@ class PatternTests: XCTestCase {
         XCTAssertEqual(result.captures[4], "2018year-01-01")
     }
     
+    func testBugs() {
+        let pattern = "(\\+|\\+\\+|\\.\\+|-|--)(\\d+)([hdwmy])"
+        let p = PatternMachine.compile((pattern, 0)).value!
+        let result = p.matches("++2y")
+        XCTAssert(result.matches)
+        XCTAssertEqual(result.captures.count, 3)
+        XCTAssertEqual(result.captures[0], "++")
+        XCTAssertEqual(result.captures[1], "2")
+        XCTAssertEqual(result.captures[2], "y")
+    }
+    
     static var allTests = [
         ("testOrgmodePattern", testOrgmodePattern),
     ]
