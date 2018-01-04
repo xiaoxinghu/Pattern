@@ -60,19 +60,29 @@ extension PatternMachine : Pattern {
         var state = dfa.initial
         var result = MatchResult()
         result.string = string
-        for c in string.unicodeScalars {
+        
+        var iterator = string.unicodeScalars.makeIterator()
+        var captureDone = false
+        while let c = iterator.next() {
             if let next = findNext(from: state, with: c) {
-                if let group = dfa.states[state].captures[next] {
-                    while result.captures.count <= group {
-                        result.captures.append("")
+                if let groups = dfa.states[state].captures[next] {
+                    captureDone = false
+                    for i in 0..<groups.count {
+                        let group = groups[i]
+                        while result.captures.count <= group {
+                            result.captures.append("")
+                        }
+                        result.captures[group].append(Character(c))
                     }
-                    result.captures[group].append(Character(c))
+                } else if result.matches && captureDone {
+                    return result
+                } else {
+                    captureDone = true
                 }
                 
                 if dfa.states[next].isEnd {
                     result.matches = true
                     result.traceId = dfa.states[next].traceId
-                    return result
                 }
                 state = next
                 continue

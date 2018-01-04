@@ -203,6 +203,16 @@ class PatternTests: XCTestCase {
         XCTAssertEqual(result.captures[0], "2017")
         XCTAssertEqual(result.captures[1], "12")
         XCTAssertEqual(result.captures[2], "16")
+        
+        // Found a bug that will fail this test
+        let pattern2 = "(\\d+)-(\\d+)-(\\d+)"
+        let p2 = PatternMachine.compile((pattern2, 0)).value!
+        let result2 = p2.matches("2017-12-16")
+        XCTAssert(result2.matches)
+        XCTAssertEqual(result2.captures.count, 3)
+        XCTAssertEqual(result2.captures[0], "2017")
+        XCTAssertEqual(result2.captures[1], "12")
+        XCTAssertEqual(result2.captures[2], "16")
     }
     
     func testMergedMachine() {
@@ -228,6 +238,19 @@ class PatternTests: XCTestCase {
         XCTAssertEqual(result.captures[2], "16")
         
         XCTAssertFalse(p.matches("😀-😀-16").matches)
+    }
+    
+    func testNestedCapture() {
+        let pattern = "((\\d+(\\w+))-(\\d+)-(\\d+))"
+        let p = PatternMachine.compile((pattern, 0)).value!
+        let result = p.matches("2018year-01-01")
+        XCTAssert(result.matches)
+        XCTAssertEqual(result.captures.count, 5)
+        XCTAssertEqual(result.captures[0], "year")
+        XCTAssertEqual(result.captures[1], "2018year")
+        XCTAssertEqual(result.captures[2], "01")
+        XCTAssertEqual(result.captures[3], "01")
+        XCTAssertEqual(result.captures[4], "2018year-01-01")
     }
     
     static var allTests = [

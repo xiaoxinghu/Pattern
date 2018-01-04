@@ -1,0 +1,13 @@
+sources:
+  - Sources
+  - Tests
+
+templates:
+  - Templates
+
+args:
+  testimports: '@testable import PatternTests'
+
+output:
+  .
+
