@@ -241,14 +241,16 @@ class PatternTests: XCTestCase {
     }
     
     func testNestedCapture() {
-        let pattern = "((\\d+)-(\\d+)-(\\d+))"
+        let pattern = "((\\d+(\\w+))-(\\d+)-(\\d+))"
         let p = PatternMachine.compile((pattern, 0)).value!
-        let result = p.matches("2018-01-01")
+        let result = p.matches("2018year-01-01")
         XCTAssert(result.matches)
-        XCTAssertEqual(result.captures.count, 4)
-        for c in result.captures {
-            print("-- \(c)")
-        }
+        XCTAssertEqual(result.captures.count, 5)
+        XCTAssertEqual(result.captures[0], "year")
+        XCTAssertEqual(result.captures[1], "2018year")
+        XCTAssertEqual(result.captures[2], "01")
+        XCTAssertEqual(result.captures[3], "01")
+        XCTAssertEqual(result.captures[4], "2018year-01-01")
     }
     
     static var allTests = [

@@ -65,12 +65,14 @@ extension PatternMachine : Pattern {
         var captureDone = false
         while let c = iterator.next() {
             if let next = findNext(from: state, with: c) {
-                if let group = dfa.states[state].captures[next] {
+                if let groups = dfa.states[state].captures[next] {
                     captureDone = false
-                    while result.captures.count <= group {
-                        result.captures.append("")
+                    for group in groups {
+                        while result.captures.count <= group {
+                            result.captures.append("")
+                        }
+                        result.captures[group].append(Character(c))
                     }
-                    result.captures[group].append(Character(c))
                 } else if result.matches && captureDone {
                     return result
                 } else {
