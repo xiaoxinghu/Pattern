@@ -67,7 +67,8 @@ extension PatternMachine : Pattern {
             if let next = findNext(from: state, with: c) {
                 if let groups = dfa.states[state].captures[next] {
                     captureDone = false
-                    for group in groups {
+                    for i in 0..<groups.count {
+                        let group = groups[i]
                         while result.captures.count <= group {
                             result.captures.append("")
                         }
