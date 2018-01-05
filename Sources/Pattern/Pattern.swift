@@ -111,19 +111,16 @@ extension PatternMachine : Pattern {
         //            }
         //        }
         
-        if let dest = state.transitions[CharacterExpression.d.rawValue],
-            CharacterExpression.d.match(input) {
+        if CharacterExpression.isD(input), let dest = state.transitions[CharacterExpression.d.rawValue] {
             return dest
         }
-        if let dest = state.transitions[CharacterExpression.w.rawValue],
-            CharacterExpression.w.match(input) {
+        if CharacterExpression.isW(input), let dest = state.transitions[CharacterExpression.w.rawValue] {
             return dest
         }
-        if let dest = state.transitions[CharacterExpression.any.rawValue],
-            CharacterExpression.any.match(input) {
+        if let dest = state.transitions[CharacterExpression.any.rawValue] {
             return dest
         }
-        
+
         return nil
     }
 }
