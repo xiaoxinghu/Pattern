@@ -1,7 +1,7 @@
 import XCTest
 import Pattern
 
-func match(_ pattern: String, against text: String) -> MatchResult? {
+func match(_ pattern: String, against text: String) -> MatchResult<String>? {
     guard let p = PatternMachine.compile((pattern, pattern.hashValue)).value else { return nil }
     return p.matches(text)
 }

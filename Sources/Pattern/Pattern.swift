@@ -1,15 +1,19 @@
 import Foundation
 import FuncKit
 
-public struct MatchResult {
-    public var string: String = ""
+public struct MatchResult<S : StringProtocol> {
+    public var string: S = ""
     public var matches: Bool = false
     public var captures: [String] = []
     public var traceId: Int = -1
+    
+    init(_ _string: S) {
+        string = _string
+    }
 }
 
 public protocol Pattern {
-    func matches(_ string: String) -> MatchResult
+    func matches<S : StringProtocol>(_ string: S) -> MatchResult<S>
 }
 
 public struct PatternMachine {
@@ -56,10 +60,9 @@ private func _compile(_ branches: [(String, Int)]) -> Result<PatternMachine> {
 
 extension PatternMachine : Pattern {
     
-    public func matches(_ string: String) -> MatchResult {
+    public func matches<S : StringProtocol>(_ string: S) -> MatchResult<S> {
         var state = dfa.initial
-        var result = MatchResult()
-        result.string = string
+        var result = MatchResult(string)
         
         var iterator = string.unicodeScalars.makeIterator()
         var captureDone = false
